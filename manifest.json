@@ -14,15 +14,15 @@
     "tabs"
   ],
   "background": {
-    "scripts": "src/bg/background.js",
+    "scripts": ["src/bg/background.js"],
     "persistent": false
   },
   "page_action": {
-    "default_icon": "icons/icon48.png",
+    "default_icon": "icons/icon48.png"
   },
   "content_scripts": [
     {
-      "matches": ["https://apps.carleton.edu/campus/registrar/schedule/enroll/*", "https://thehub.carleton.edu/WebAdvisor/*"],
+      "matches": ["https://apps.carleton.edu/campus/registrar/schedule/enroll/*", "https://thehub.carleton.edu/*"],
       "css": ["css/styles.css"],
       "js": ["js/main.js"]
     }
