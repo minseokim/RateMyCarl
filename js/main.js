@@ -3,22 +3,20 @@
   Made with <3 for Carleton Students
 **/
 
+/*
+  Formats professors with middle names i.e. "Richard A Keiser" => "Richard Keiser"
+*/
 const formatProfNameWithSpace = (name) => {
 
-  if (Array.isArray(name)) {
-    name = name.join("");
-  }
-
-  let nameArr = name.split(' ');
-  let formattedProfName = [];
-  formattedProfName.push(nameArr[0]);
-  formattedProfName.push(nameArr[nameArr.length-1]);
-  formattedProfName = formattedProfName.join(' ');
+  let nameArr = name.split(" ");
+  let formattedProfName = nameArr[0] + " " + nameArr[nameArr.length-1];
 
   return formattedProfName;
 };
 
-//handles parsing professor names from enroll page
+/*
+  Fetches all professor names from enroll page and stores in a set
+*/
 const getNamesFromEnroll = function() {
 
   let profNameSet = new Set();
@@ -30,6 +28,7 @@ const getNamesFromEnroll = function() {
 
   //add all profNames from enroll page to set to handle duplicates
   profNamesFromEnroll.forEach(function(facultyNode) {
+
     let profNames = facultyNode.innerText.split(", ");
 
     for (let i = 0; i < profNames.length; i++) {
@@ -38,29 +37,44 @@ const getNamesFromEnroll = function() {
 
   });
 
+  // profNameSet.forEach((name) => {
+  //   console.log(name);
+  // });
+
   return profNameSet;
 };
 
-// //handles parsing professor names from the hub
-// const getNamesFromHub = function() {
+/*
+  Fetches all professor names from The Hub and stores them in a set
+*/
+const getNamesFromHub = function() {
 
-//   let profNameSet = new Set();
+  let profNameSet = new Set();
 
-//   let profNamesFromHub = document.getElementsByClassName(" SEC_FACULTY_INFO");
+  let profNamesFromHub = document.getElementsByClassName(" SEC_FACULTY_INFO");
 
-//   //change returned HTMLCollection to array
-//   profNamesFromHub = Array.from(profNamesFromHub);
+  //change returned HTMLCollection to array
+  profNamesFromHub = Array.from(profNamesFromHub);
 
-//   //Hougen-Eitzman, David, Mitra, Raka
-//   //Keiser, Richard
+  //Hougen-Eitzman, David, Mitra, Raka
+  //Bou Nassif, Hicham
+  //Keiser, Richard
 
-//   profNamesFromHub.forEach(function(facultyNode) {
-//     let profName = facultyNode.innerText;
-//     console.log(profName);
-//     profName = profName.split(", ");
-//     // console.log(profName);
-//   });
-// };
+  profNamesFromHub.forEach(function(facultyNode) {
+
+    //remove all commas from names and split into array
+    let profNames = facultyNode.innerText.replace(/,|\n/g , "").split(" ");
+
+    for (let i = 0; i < profNames.length; i+=2) {
+      let formattedProfName = profNames[i+1] + " " + profNames[i];
+      console.log(formattedProfName);
+      profNameSet.add(formattedProfName);
+    }
+  });
+
+  return profNameSet;
+
+};
 
 
 const addRatings = function() {
@@ -78,6 +92,3 @@ const addRatings = function() {
 const fetchRatings = function() {
 
 };
-
-getNamesFromEnroll();
-// getNamesFromHub();
