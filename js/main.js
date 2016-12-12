@@ -3,12 +3,19 @@
   Made with <3 for Carleton Students
 **/
 
-const formatProfNameWithSpace = (nameArray) => {
+const formatProfNameWithSpace = (name) => {
+
+  if (Array.isArray(name)) {
+    name = name.join("");
+  }
+
+  let nameArr = name.split(' ');
   let formattedProfName = [];
-  formattedProfName.push(nameArray[0]);
-  formattedProfName.push(nameArray[profName.length-1]);
-  let profName = formattedProfName.join(' ');
-  return profName;
+  formattedProfName.push(nameArr[0]);
+  formattedProfName.push(nameArr[nameArr.length-1]);
+  formattedProfName = formattedProfName.join(' ');
+
+  return formattedProfName;
 };
 
 //handles parsing professor names from enroll page
@@ -23,34 +30,10 @@ const getNamesFromEnroll = function() {
 
   //add all profNames from enroll page to set to handle duplicates
   profNamesFromEnroll.forEach(function(facultyNode) {
+    let profNames = facultyNode.innerText.split(", ");
 
-    let profName = facultyNode.innerText.split(", ");
-
-    if (profName.length === 1) {
-
-      profNameSet.add(profName.join(""));
-
-    } else if (profName.length === 3) {
-      //Edge Case 1 : Professor has middle name("Richard A Keiser")
-      profNameSet.add(formatProfNameWithSpace(profName));
-    } else {
-      //Edge Case 2 : Class has multiple instructors("Mark McKone, Stephan G Zweifel")
-    }
-
-    //Handle two edge cases : classes multiple profs, and profs with middle name
-
-    if (profName.)
-    if (profName.length > 2) {
-      //"Mark McKone, Stephan G Zweifel"
-      if (profName.length > 3) {
-        profName = profName.split(', ');
-
-      } else {
-        //"Richard A Keiser"
-        profName = formatProfNameWithSpace(profName.split(' '));
-      }
-    } else {
-      profNameSet.add()
+    for (let i = 0; i < profNames.length; i++) {
+      profNameSet.add(formatProfNameWithSpace(profNames[i]));
     }
 
   });
@@ -97,4 +80,4 @@ const fetchRatings = function() {
 };
 
 getNamesFromEnroll();
-getNamesFromHub();
+// getNamesFromHub();
