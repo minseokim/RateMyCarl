@@ -3,6 +3,20 @@
   Made with <3 for Carleton Students
 **/
 
+
+/*
+  Professor names that are exceptions on The Hub/Enroll
+*/
+let exceptions = {
+  "Jaret McKinstry, Susan" : "Susan+Jaret-McKinstry",
+  "López, Silvia" : "Silvia+Lopez",
+  "Silvia López" : "Silvia+Lopez",
+  "Palmar M Álvarez-Blanco" : "Palmar+Alvarez-Blanco",
+  "José Cerna-Bazán" : "Jose+Cerna-Bazan",
+  "Beatriz Pariente-Beltrán" : "Beatriz+Pariente-Beltran"
+};
+
+
 /*
   Formats professors with middle names i.e. "Richard A Keiser" => "Richard Keiser"
 */
@@ -15,7 +29,7 @@ const formatProfNameWithSpace = (name) => {
 };
 
 
-const processFirstRequest = (data, name) => {
+const processFirstRequest = (data, map, name) => {
 
   let tempDiv = document.createElement('div');
   tempDiv.innerHTML = data;
@@ -25,6 +39,7 @@ const processFirstRequest = (data, name) => {
   if (foundProfessors.length === 0 || !foundProfessors) {
     //No search results, populate result UI with "N/A"
     console.error("No search results found for : ", name);
+
     throw new Error("No search results found");
   } else {
     //There is a search result, fetch professor's profile page link
@@ -42,12 +57,12 @@ const processSecondRequest = (info, map, name) => {
     overallQuality : "N/A",
     wouldTakeAgain : "N/A",
     difficultyRating : "N/A",
-    profileLink : "¯\\_(ツ)_/¯"
+    profileLink : "¯\\_(ツ)_/¯",
+    reviewsExist : false
   }
 
   let data = info.data;
   let profileLink = info.url;
-
 
   //replace GET request 404 error messages from RateMyProfessors.com with empty string
   data = data.replace('/assets/chilis/warm-chili.png', '');
@@ -68,6 +83,7 @@ const processSecondRequest = (info, map, name) => {
     gradeInfo.overallQuality = ratings[0].innerText.replace(/\n/g, "").trim();
     gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
     gradeInfo.difficultyRating = ratings[2].innerText.replace(/\n/g, "").trim();
+    gradeInfo.reviewsExist = true;
   }
 
   //add url to gradeInfo whether there are reviews or not(Since profile page DOES exist)
@@ -92,22 +108,26 @@ const getNamesFromEnroll = (professorMap) => {
 
   profNamesFromEnroll.forEach(function(facultyNode) {
 
-    let profNames = facultyNode.innerText.split(", ");
+    let profNames = facultyNode.innerText.split(", ");;
 
     //iterate over professor names, because one class can have multiple instructors
     for (let i = 0; i < profNames.length; i++) {
       let finalizedProfName = formatProfNameWithSpace(profNames[i]);
 
+      //check if name is one of exception, if so, convert it
+      if (exceptions[facultyNode.innerText]) {
+        finalizedProfName = exceptions[facultyNode.innerText];
+      }
+      //If this is a professor that's been processed already and results exist, add to ratings
       if (professorMap.has(finalizedProfName)) {
 
         addRatings(professorMap.get(finalizedProfName), facultyNode, "enroll");
-
       } else {
 
         findProfessorPage(finalizedProfName)
-          .then((data) => { return processFirstRequest(data, finalizedProfName) })
+          .then((data) => { return processFirstRequest(data, professorMap, finalizedProfName); })
             .then(fetchRatings)
-              .then((data) => { return processSecondRequest(data, professorMap, finalizedProfName) })
+              .then((data) => { return processSecondRequest(data, professorMap, finalizedProfName); })
                 .then((professorInfo) => { addRatings(professorInfo, facultyNode, "enroll"); })
                   .catch( (reason) => { console.error("ERROR : ", reason); });
 
@@ -162,13 +182,20 @@ const getNamesFromHub = (professorMap) => {
     for (let i = 0; i < profNames.length; i+=2) {
       let formattedProfName = profNames[i+1] + "+" + profNames[i];
 
-      //This professor's not in our map yet, go ahead and make request
+      //check if name is one of exception, if so, convert it
+      let joinedProfName = profNames.join(" ");
+      if (exceptions[joinedProfName]) {
+        formattedProfName = exceptions[joinedProfName];
+      }
+
+      //If this is a new professor, make new request
       if (professorMap.has(formattedProfName)) {
+        console.log('handling duplicates!!');
         addRatings(professorMap.get(formattedProfName), facultyNode, "hub");
       } else {
 
         findProfessorPage(formattedProfName)
-          .then((data) => { return processFirstRequest(data, formattedProfName) })
+          .then((data) => { return processFirstRequest(data, professorMap, formattedProfName); })
             .then(fetchRatings)
               .then((data) => { return processSecondRequest(data, professorMap, formattedProfName); })
                 .then((data) => { addRatings(data, facultyNode, "hub"); })
@@ -184,16 +211,16 @@ const getNamesFromHub = (professorMap) => {
   Finds professor's specific profile page from initial search results
 */
 const findProfessorPage = (professorName) => {
-
   //Our url for making initial request to find professor's profile page, change url with professor's name
   let url = "http://www.ratemyprofessors.com/search.jsp?queryBy=teacherName&schoolName=Carleton+College&queryoption=HEADER&query=PROFESSORNAME&facetSearch=true";
   url = url.replace("PROFESSORNAME", professorName);
-
 
   let requestInfo = {
     method: 'GET',
     url: url
   };
+
+
 
   return new Promise(function(resolve, reject) {
     chrome.runtime.sendMessage(requestInfo, function(data) {
@@ -261,6 +288,10 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     elements.difficultyRating.prepend(document.createTextNode("Difficulty : "));
     elements.profileLink.prepend(document.createTextNode("Read All Reviews"));
 
+    if (!professorData.reviewsExist) {
+      elements.profileLink.innerText = "Add First Review";
+    }
+
     facultyNode.appendChild(elements.overallQuality);
     facultyNode.appendChild(elements.difficultyRating);
     facultyNode.appendChild(elements.wouldTakeAgain);
@@ -273,6 +304,10 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     elements.wouldTakeAgain.prepend(document.createTextNode("WTA: "));
     elements.difficultyRating.prepend(document.createTextNode("Difficulty: "));
     elements.profileLink.prepend(document.createTextNode("Read Reviews"));
+
+    if (!professorData.reviewsExist) {
+      elements.profileLink.innerText = "Write Review";
+    }
 
     cell.appendChild(elements.overallQuality);
     cell.appendChild(elements.difficultyRating);
