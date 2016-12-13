@@ -61,10 +61,6 @@ const processSecondRequest = (data, map, name) => {
     gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
     gradeInfo.levelOfDifficulty = ratings[2].innerText.replace(/\n/g, "").trim();
   }
-
-  console.log('professorName :', name);
-  console.log('grade :', gradeInfo);
-
   //map professor name with ratings
   map.set(name, gradeInfo);
 
@@ -93,13 +89,15 @@ const getNamesFromEnroll = (professorMap) => {
       if (professorMap.has(finalizedProfName)) {
 
         //call add ratings function
-        // console.log(professorMap.get(finalizedProfName));
+        // addRatings(facultyNode);
+
       } else {
         findProfessorPage(finalizedProfName)
           .then(processFirstRequest)
             .then(fetchRatings)
-              .then((data) => { processSecondRequest(data, professorMap, finalizedProfName) })
-                .catch( (reason) => { console.error("Caught error for this :", reason); });
+              .then((data) => { return processSecondRequest(data, professorMap, finalizedProfName) })
+                .then((professorInfo) => { addRatings(professorInfo, facultyNode); })
+                  .catch( (reason) => { console.error("ERROR : ", reason); });
       }
 
     }
@@ -136,17 +134,16 @@ const getNamesFromHub = (professorMap) => {
         console.log(professorMap.get(finalizedProfName));
       } else {
 
-        findProfessorPage(finalizedProfName)
+        findProfessorPage(formattedProfName)
           .then(processFirstRequest)
             .then(fetchRatings)
-              .then((data) => { processSecondRequest(data, professorMap, finalizedProfName) })
-                .catch( (reason) => { console.error("Caught error for this :", reason); });
+              .then((data) => { processSecondRequest(data, professorMap, formattedProfName); })
+                .then((data) => { addRatings(data, facultyNode); })
+                  .catch( (reason) => { console.error("Caught error for this :", reason); });
       }
 
     }
   });
-
-  return profNameSet;
 };
 
 
@@ -199,8 +196,28 @@ const fetchRatings = (profilePageLink) => {
 };
 
 
-const addRatingsToPage = (professorInfo) => {
+const addRatings = (professorData, facultyNode) => {
 
+  console.log('facultyNode :', facultyNode);
+  console.log('profesorData : ' , professorData);
+
+  let heading = document.createElement("h4");
+  let overallRating = document.createElement("p");
+  let wouldTakeAgainPercentage = document.createElement("p");
+  let difficultyRating = document.createElement("p");
+
+  overallRating.innerText = "Average Rating : " + professorData.overallQuality;
+  wouldTakeAgainPercentage.innerText = "Would Take Again : " + professorData.wouldTakeAgain;
+  difficultyRating.innerText = "Difficulty : " + professorData.levelOfDifficulty;
+
+  // console.log('overallRating :', overallRating);
+  // console.log('wouldTakeAgainPercentage :', wouldTakeAgainPercentage);
+  // console.log('difficultyRating :', difficultyRating);
+  //check if enroll or hub
+  //enroll
+  facultyNode.appendChild(overallRating);
+  facultyNode.appendChild(wouldTakeAgainPercentage);
+  facultyNode.appendChild(difficultyRating);
 };
 
 
@@ -209,7 +226,7 @@ const main = () => {
   let processedProfessorSoFar = new Map();
 
   //check which site we're on, and call handleEnrollPage or handleHubPage
-  if (window.location.hostname === "apps.carleton.edu") {
+  if (window.location.hostname === "apps.carleton.edu" && window.location.pathname === "/campus/registrar/schedule/enroll/") {
     getNamesFromEnroll(processedProfessorSoFar);
   } else if (window.location.hostname === "thehub.carleton.edu") {
     getNamesFromHub(processedProfessorSoFar);
