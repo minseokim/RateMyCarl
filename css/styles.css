@@ -1,3 +1,11 @@
-.rateMyProfessor-ratings > p {
+.thehub > p {
   width : 90px !important;
+}
+
+.rateMyProfessor-rating {
+  font-weight: bold !important;
+}
+
+.rateMyProfessor-rating > span {
+  font-weight : normal !important;
 }

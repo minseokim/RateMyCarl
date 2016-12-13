@@ -41,7 +41,7 @@ const processSecondRequest = (data, map, name) => {
   let gradeInfo = {
     overallQuality : "N/A",
     wouldTakeAgain : "N/A",
-    levelOfDifficulty : "N/A"
+    difficultyRating : "N/A"
   }
 
   //replace GET request 404 error messages from RateMyProfessors.com with empty string
@@ -62,7 +62,7 @@ const processSecondRequest = (data, map, name) => {
   if (ratings.length >= 3) {
     gradeInfo.overallQuality = ratings[0].innerText.replace(/\n/g, "").trim();
     gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
-    gradeInfo.levelOfDifficulty = ratings[2].innerText.replace(/\n/g, "").trim();
+    gradeInfo.difficultyRating = ratings[2].innerText.replace(/\n/g, "").trim();
   }
   //map professor name with ratings
   map.set(name, gradeInfo);
@@ -129,16 +129,16 @@ const getNamesFromHub = (professorMap) => {
   let tableHeaders = rows[5];
   let header = document.createElement("th");
   header.innerText = 'Ratings';
-  header.className += "Grp_WSS_COURSE_SECTIONS left";
+  header.className += "Grp_WSS_COURSE_SECTIONS ";
   tableHeaders.append(header);
 
   //Add column to each row
   for (let i = 6; i < rows.length-1; i++) {
     let column = document.createElement("td");
       if (i % 2 === 0) {
-        column.className += "rateMyProfessor-ratings oddrow";
+        column.className += "thehub oddrow";
       } else {
-        column.className += "rateMyProfessor-ratings evenrow";
+        column.className += "thehub evenrow";
       }
     rows[i].append(column);
   }
@@ -219,36 +219,38 @@ const fetchRatings = (profilePageLink) => {
 
 const addRatings = (professorData, facultyNode, whichPage) => {
 
-  let overallRating = document.createElement("p");
-  let wouldTakeAgainPercentage = document.createElement("p");
-  let difficultyRating = document.createElement("p");
+  let paragraphElements = {
+    overallQuality : document.createElement("p"),
+    wouldTakeAgain : document.createElement("p"),
+    difficultyRating : document.createElement("p")
+  };
+
+  for (key in paragraphElements) {
+    let data = professorData[key];
+    paragraphElements[key].innerHTML = `<span>${data}</span>`;
+    paragraphElements[key].className += "rateMyProfessor-rating";
+  }
 
   if (whichPage === "enroll") {
-    let heading = document.createElement("h4");
 
-    overallRating.innerText = "Average Rating : " + professorData.overallQuality;
-    wouldTakeAgainPercentage.innerText = "Would Take Again : " + professorData.wouldTakeAgain;
-    difficultyRating.innerText = "Difficulty : " + professorData.levelOfDifficulty;
+    paragraphElements.overallQuality.prepend(document.createTextNode("Average Rating : "));
+    paragraphElements.wouldTakeAgain.prepend(document.createTextNode("Would Take Again : "));
+    paragraphElements.difficultyRating.prepend(document.createTextNode("Difficulty : "));
 
-    // console.log('overallRating :', overallRating);
-    // console.log('wouldTakeAgainPercentage :', wouldTakeAgainPercentage);
-    // console.log('difficultyRating :', difficultyRating);
-    //check if enroll or hub
-    //enroll
-    facultyNode.appendChild(overallRating);
-    facultyNode.appendChild(wouldTakeAgainPercentage);
-    facultyNode.appendChild(difficultyRating);
+    facultyNode.appendChild(paragraphElements.overallQuality);
+    facultyNode.appendChild(paragraphElements.difficultyRating);
+    facultyNode.appendChild(paragraphElements.wouldTakeAgain);
   } else if (whichPage === "hub") {
 
     //from facultyNode, walk up to parent, then get lastChild to get current cell
     let cell = facultyNode.parentNode.lastChild;
-    overallRating.innerText = "Avg: " + professorData.overallQuality;
-    wouldTakeAgainPercentage.innerText = "WTA: " + professorData.wouldTakeAgain;
-    difficultyRating.innerText = "Difficulty: " + professorData.levelOfDifficulty;
+    paragraphElements.overallQuality.prepend(document.createTextNode("Avg: "));
+    paragraphElements.wouldTakeAgain.prepend(document.createTextNode("WTA: "));
+    paragraphElements.difficultyRating.prepend(document.createTextNode("Difficulty: "));
 
-    cell.appendChild(overallRating);
-    cell.appendChild(difficultyRating);
-    cell.appendChild(wouldTakeAgainPercentage);
+    cell.appendChild(paragraphElements.overallQuality);
+    cell.appendChild(paragraphElements.difficultyRating);
+    cell.appendChild(paragraphElements.wouldTakeAgain);
   }
 
 };
