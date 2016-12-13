@@ -18,7 +18,7 @@
     "persistent": false
   },
   "page_action": {
-    "default_icon": "icons/icon48.png"
+    "default_icon": "icons/icon19.png"
   },
   "content_scripts": [
     {
