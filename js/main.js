@@ -129,7 +129,7 @@ const getNamesFromHub = (professorMap) => {
   let tableHeaders = rows[5];
   let header = document.createElement("th");
   header.innerText = 'Ratings';
-  header.className += "Grp_WSS_COURSE_SECTIONS right";
+  header.className += "Grp_WSS_COURSE_SECTIONS left";
   tableHeaders.append(header);
 
   //Add column to each row
