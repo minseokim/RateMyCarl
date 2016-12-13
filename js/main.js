@@ -15,6 +15,63 @@ const formatProfNameWithSpace = (name) => {
 };
 
 
+const processFirstRequest = (data) => {
+
+  let tempDiv = document.createElement('div');
+  tempDiv.innerHTML = data;
+
+  let foundProfessors = tempDiv.getElementsByClassName('listing PROFESSOR');
+
+  if (foundProfessors.length === 0 || !foundProfessors) {
+    //No search results, populate result UI with "N/A"
+    throw new Error("No search results for this professor");
+  } else {
+    //There is a search result, fetch professor's profile page link
+      let link = foundProfessors[0].getElementsByTagName("a")[0].getAttribute("href"); //ShowRatings.jsp?tid=2108435
+      let profilePageLink = "http://www.ratemyprofessors.com" + link;
+
+      return profilePageLink;
+    }
+};
+
+
+const processSecondRequest = (data, map, name) => {
+
+  let gradeInfo = {
+    overallQuality : "N/A",
+    wouldTakeAgain : "N/A",
+    levelOfDifficulty : "N/A"
+  }
+
+  data = data.replace('/assets/chilis/warm-chili.png', '');
+  data = data.replace('/assets/chilis/cold-chili.png', '');
+  data = data.replace('/assets/chilis/new-hot-chili.png', '');
+  data = data.replace('/assets/mobileAppPromo.png', '');
+  data = data.replace('assets/ok.png');
+
+  let ratingResults = document.createElement("div");
+  ratingResults.innerHTML = data;
+
+  let ratings = ratingResults.getElementsByClassName("grade");
+  //May not exist yet(Reviews have not been added)
+  //OR [0] : overall quality  [1] : would take again  [2] : level of difficulty
+
+  if (ratings.length >= 3) {
+    gradeInfo.overallQuality = ratings[0].innerText.replace(/\n/g, "").trim();
+    gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
+    gradeInfo.levelOfDifficulty = ratings[2].innerText.replace(/\n/g, "").trim();
+  }
+
+  console.log('professorName :', name);
+  console.log('grade :', gradeInfo);
+
+  //map professor name with ratings
+  map.set(name, gradeInfo);
+
+  return gradeInfo;
+};
+
+
 /*
   Fetches all professor names from enroll page and stores in a set
 */
@@ -33,15 +90,18 @@ const getNamesFromEnroll = (professorMap) => {
     for (let i = 0; i < profNames.length; i++) {
       let finalizedProfName = formatProfNameWithSpace(profNames[i]);
 
-      if (!professorMap.has(finalizedProfName)) {
-        //rmpInfo means data we get back from RateMyProfessor.com
-        let rmpInfo = findProfessorPage(finalizedProfName);
+      if (professorMap.has(finalizedProfName)) {
 
-        //map each professor name to the data
-        professorMap.set(finalizedProfName, rmpInfo);
+        //call add ratings function
+        // console.log(professorMap.get(finalizedProfName));
+      } else {
+        findProfessorPage(finalizedProfName)
+          .then(processFirstRequest)
+            .then(fetchRatings)
+              .then((data) => { processSecondRequest(data, professorMap, finalizedProfName) })
+                .catch( (reason) => { console.error("Caught error for this :", reason); });
       }
 
-      //call add ratings function
     }
 
   });
@@ -70,15 +130,19 @@ const getNamesFromHub = (professorMap) => {
     for (let i = 0; i < profNames.length; i+=2) {
       let formattedProfName = profNames[i+1] + "+" + profNames[i];
 
-      if (!professorMap.has(formattedProfName)) {
-        //rmpInfo means data we get back from RateMyProfessor.com
-        let rmpInfo = findProfessorPage(formattedProfName);
+      //This professor's not in our map yet, go ahead and make request
+      if (professorMap.has(formattedProfName)) {
+        //call add ratings function
+        console.log(professorMap.get(finalizedProfName));
+      } else {
 
-        //map each professor name to the data
-        professorMap.set(finalizedProfName, rmpInfo);
+        findProfessorPage(finalizedProfName)
+          .then(processFirstRequest)
+            .then(fetchRatings)
+              .then((data) => { processSecondRequest(data, professorMap, finalizedProfName) })
+                .catch( (reason) => { console.error("Caught error for this :", reason); });
       }
 
-      //call add ratings function
     }
   });
 
@@ -89,77 +153,50 @@ const getNamesFromHub = (professorMap) => {
 /*
   Finds professor's specific profile page from initial search results
 */
-const findProfessorPage = () => {
+const findProfessorPage = (professorName) => {
 
   //Our url for making initial request to find professor's profile page
   let url = "http://www.ratemyprofessors.com/search.jsp?queryBy=teacherName&schoolName=Carleton+College&queryoption=HEADER&query=PROFESSORNAME&facetSearch=true";
   url = url.replace("PROFESSORNAME", professorName);
 
-  let tempDiv = document.createElement('div');
 
   let requestInfo = {
     method: 'GET',
-    url: url,
+    url: url
   };
 
-  chrome.runtime.sendMessage(requestInfo, function(data) {
-
-    tempDiv.innerHTML = data;
-    let foundProfessors = tempDiv.getElementsByClassName('listing PROFESSOR');
-    // console.log(foundProfessors);
-
-    if (foundProfessors.length === 0) {
-      //No search results, populate result UI with "N/A"
-      return;
-    } else {
-      //There is a search result, fetch professor's profile page link
-        let link = foundProfessors[0].getElementsByTagName("a")[0].getAttribute("href"); ///ShowRatings.jsp?tid=2108435
-        let profilePageLink = "http://www.ratemyprofessors.com" + link;
-
-        //make second request
-        chrome.runtime.sendMessage({
-          method: 'GET',
-          url: profilePageLink
-        }, function(response) {
-          // addRatingsToPage(response);
-
-          response = response.replace('/assets/chilis/warm-chili.png', '');
-          response = response.replace('/assets/chilis/cold-chili.png', '');
-          response = response.replace('/assets/chilis/new-hot-chili.png', '');
-          response = response.replace('/assets/mobileAppPromo.png', '');
-          response = response.replace('assets/ok.png');
-          // console.log('ratings successfully received');
-
-          let ratingResults = document.createElement("div");
-          ratingResults.innerHTML = response;
-
-          let ratings = ratingResults.getElementsByClassName("grade");
-          //May not exist yet(Reviews have not been added)
-          //OR [0] : overall quality  [1] : would take again  [2] : level of difficulty
-
-          let overallQuality = "N/A";
-          let wouldTakeAgain = "N/A";
-          let levelOfDifficulty = "N/A";
-
-          if (ratings.length >= 3) {
-            overallQuality = ratings[0].innerText;
-            wouldTakeAgain = ratings[1].innerText;
-            levelOfDifficulty = ratings[2].innerText;
-          }
-
-          let gradeInfo = {
-            overallQuality : overallQuality,
-            wouldTakeAgain : wouldTakeAgain,
-            levelOfDifficulty : levelOfDifficulty
-          }
-
-        });
+  return new Promise(function(resolve, reject) {
+    chrome.runtime.sendMessage(requestInfo, function(data) {
+      if (data) {
+        resolve(data);
+      } else {
+        console.error('error in getting back data');
+        reject(data);
       }
+    });
   });
 
-  return gradeInfo;
 };
 
+
+const fetchRatings = (profilePageLink) => {
+  console.log(profilePageLink);
+
+  return new Promise(function(resolve, reject) {
+    //make second request
+      chrome.runtime.sendMessage({
+        method: 'GET',
+        url: profilePageLink
+      }, function(data) {
+
+        if (data) {
+          resolve(data);
+        } else {
+          reject(data);
+        }
+      });
+  });
+};
 
 
 const addRatingsToPage = (professorInfo) => {
