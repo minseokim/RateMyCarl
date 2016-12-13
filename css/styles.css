@@ -1,9 +1,12 @@
 .thehub > p {
-  width : 90px !important;
+  width : 94px !important;
 }
 
 .rateMyProfessor-rating {
   font-weight: bold !important;
+  font-style: italic;
+  margin-top: 2px;
+  padding: 2px 0px;
 }
 
 .rateMyProfessor-rating > span {

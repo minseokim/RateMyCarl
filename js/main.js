@@ -36,13 +36,17 @@ const processFirstRequest = (data, name) => {
 };
 
 
-const processSecondRequest = (data, map, name) => {
+const processSecondRequest = (info, map, name) => {
 
   let gradeInfo = {
     overallQuality : "N/A",
     wouldTakeAgain : "N/A",
-    difficultyRating : "N/A"
+    difficultyRating : "N/A",
+    profileLink : "¯\\_(ツ)_/¯"
   }
+
+  let data = info.data;
+  let profileLink = info.url;
 
   //replace GET request 404 error messages from RateMyProfessors.com with empty string
   data = data.replace('/assets/chilis/warm-chili.png', '');
@@ -63,6 +67,7 @@ const processSecondRequest = (data, map, name) => {
     gradeInfo.overallQuality = ratings[0].innerText.replace(/\n/g, "").trim();
     gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
     gradeInfo.difficultyRating = ratings[2].innerText.replace(/\n/g, "").trim();
+    gradeInfo.profileLink = profileLink;
   }
   //map professor name with ratings
   map.set(name, gradeInfo);
@@ -127,10 +132,12 @@ const getNamesFromHub = (professorMap) => {
   //Add 'rating' header to The Hub Page Table
   let rows = document.getElementsByTagName("tr");
   let tableHeaders = rows[5];
-  let header = document.createElement("th");
-  header.innerText = 'Ratings';
-  header.className += "Grp_WSS_COURSE_SECTIONS ";
-  tableHeaders.append(header);
+  if (tableHeaders) {
+    let header = document.createElement("th");
+    header.innerText = 'Ratings';
+    header.className += "Grp_WSS_COURSE_SECTIONS ";
+    tableHeaders.append(header);
+  }
 
   //Add column to each row
   for (let i = 6; i < rows.length-1; i++) {
@@ -153,8 +160,7 @@ const getNamesFromHub = (professorMap) => {
 
       //This professor's not in our map yet, go ahead and make request
       if (professorMap.has(formattedProfName)) {
-        //call add ratings function
-        console.log(professorMap.get(finalizedProfName));
+        addRatings(professorMap.get(formattedProfName), facultyNode, "hub");
       } else {
 
         findProfessorPage(formattedProfName)
@@ -206,9 +212,15 @@ const fetchRatings = (profilePageLink) => {
         method: 'GET',
         url: profilePageLink
       }, function(data) {
-
         if (data) {
-          resolve(data);
+
+          //attach professor's specific page url to object so processSecondRequest can use it
+          let info = {
+            data: data,
+            url : profilePageLink
+          };
+
+          resolve(info);
         } else {
           reject(data);
         }
@@ -219,38 +231,51 @@ const fetchRatings = (profilePageLink) => {
 
 const addRatings = (professorData, facultyNode, whichPage) => {
 
-  let paragraphElements = {
+  let elements = {
     overallQuality : document.createElement("p"),
     wouldTakeAgain : document.createElement("p"),
-    difficultyRating : document.createElement("p")
+    difficultyRating : document.createElement("p"),
+    profileLink : document.createElement("a")
   };
 
-  for (key in paragraphElements) {
-    let data = professorData[key];
-    paragraphElements[key].innerHTML = `<span>${data}</span>`;
-    paragraphElements[key].className += "rateMyProfessor-rating";
+  for (key in elements) {
+    if (key !== "profileLink") {
+      let data = professorData[key];
+      elements[key].innerHTML = `<span>${data}</span>`;
+    }
+      elements[key].className += "rateMyProfessor-rating";
   }
+
+  //add profile address to anchor tag, ensure it opens in new tab
+  elements.profileLink.href = professorData.profileLink;
+  elements.profileLink.setAttribute("target", "_blank");
 
   if (whichPage === "enroll") {
 
-    paragraphElements.overallQuality.prepend(document.createTextNode("Average Rating : "));
-    paragraphElements.wouldTakeAgain.prepend(document.createTextNode("Would Take Again : "));
-    paragraphElements.difficultyRating.prepend(document.createTextNode("Difficulty : "));
+    elements.overallQuality.prepend(document.createTextNode("Average Rating : "));
+    elements.wouldTakeAgain.prepend(document.createTextNode("Would Take Again : "));
+    elements.difficultyRating.prepend(document.createTextNode("Difficulty : "));
+    elements.profileLink.prepend(document.createTextNode("Go to Professor Page"));
 
-    facultyNode.appendChild(paragraphElements.overallQuality);
-    facultyNode.appendChild(paragraphElements.difficultyRating);
-    facultyNode.appendChild(paragraphElements.wouldTakeAgain);
+    facultyNode.appendChild(elements.overallQuality);
+    facultyNode.appendChild(elements.difficultyRating);
+    facultyNode.appendChild(elements.wouldTakeAgain);
+    facultyNode.appendChild(elements.profileLink);
   } else if (whichPage === "hub") {
 
     //from facultyNode, walk up to parent, then get lastChild to get current cell
     let cell = facultyNode.parentNode.lastChild;
-    paragraphElements.overallQuality.prepend(document.createTextNode("Avg: "));
-    paragraphElements.wouldTakeAgain.prepend(document.createTextNode("WTA: "));
-    paragraphElements.difficultyRating.prepend(document.createTextNode("Difficulty: "));
+    elements.overallQuality.prepend(document.createTextNode("Avg: "));
+    elements.wouldTakeAgain.prepend(document.createTextNode("WTA: "));
+    elements.difficultyRating.prepend(document.createTextNode("Difficulty: "));
+    elements.profileLink.prepend(document.createTextNode("Professor Page"));
 
-    cell.appendChild(paragraphElements.overallQuality);
-    cell.appendChild(paragraphElements.difficultyRating);
-    cell.appendChild(paragraphElements.wouldTakeAgain);
+    console.log(elements.profileLink);
+
+    cell.appendChild(elements.overallQuality);
+    cell.appendChild(elements.difficultyRating);
+    cell.appendChild(elements.wouldTakeAgain);
+    cell.appendChild(elements.profileLink);
   }
 
 };
