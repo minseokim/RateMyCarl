@@ -15,7 +15,7 @@ const formatProfNameWithSpace = (name) => {
 };
 
 
-const processFirstRequest = (data) => {
+const processFirstRequest = (data, name) => {
 
   let tempDiv = document.createElement('div');
   tempDiv.innerHTML = data;
@@ -24,7 +24,8 @@ const processFirstRequest = (data) => {
 
   if (foundProfessors.length === 0 || !foundProfessors) {
     //No search results, populate result UI with "N/A"
-    throw new Error("No search results for this professor");
+    console.error("No search results found for : ", name);
+    throw new Error("No search results found");
   } else {
     //There is a search result, fetch professor's profile page link
       let link = foundProfessors[0].getElementsByTagName("a")[0].getAttribute("href"); //ShowRatings.jsp?tid=2108435
@@ -88,16 +89,17 @@ const getNamesFromEnroll = (professorMap) => {
 
       if (professorMap.has(finalizedProfName)) {
 
-        //call add ratings function
-        // addRatings(facultyNode);
+        addRatings(professorMap.get(finalizedProfName), facultyNode);
 
       } else {
+
         findProfessorPage(finalizedProfName)
-          .then(processFirstRequest)
+          .then((data) => { return processFirstRequest(data, finalizedProfName) })
             .then(fetchRatings)
               .then((data) => { return processSecondRequest(data, professorMap, finalizedProfName) })
                 .then((professorInfo) => { addRatings(professorInfo, facultyNode); })
                   .catch( (reason) => { console.error("ERROR : ", reason); });
+
       }
 
     }
