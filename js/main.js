@@ -255,7 +255,7 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     elements.overallQuality.prepend(document.createTextNode("Average Rating : "));
     elements.wouldTakeAgain.prepend(document.createTextNode("Would Take Again : "));
     elements.difficultyRating.prepend(document.createTextNode("Difficulty : "));
-    elements.profileLink.prepend(document.createTextNode("Go to Professor Page"));
+    elements.profileLink.prepend(document.createTextNode("Read All Reviews"));
 
     facultyNode.appendChild(elements.overallQuality);
     facultyNode.appendChild(elements.difficultyRating);
@@ -268,9 +268,7 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     elements.overallQuality.prepend(document.createTextNode("Avg: "));
     elements.wouldTakeAgain.prepend(document.createTextNode("WTA: "));
     elements.difficultyRating.prepend(document.createTextNode("Difficulty: "));
-    elements.profileLink.prepend(document.createTextNode("Professor Page"));
-
-    console.log(elements.profileLink);
+    elements.profileLink.prepend(document.createTextNode("Read Reviews"));
 
     cell.appendChild(elements.overallQuality);
     cell.appendChild(elements.difficultyRating);
@@ -289,7 +287,10 @@ const main = () => {
   if (window.location.hostname === "apps.carleton.edu" && window.location.pathname === "/campus/registrar/schedule/enroll/") {
     getNamesFromEnroll(processedProfessorSoFar);
   } else if (window.location.hostname === "thehub.carleton.edu") {
-    getNamesFromHub(processedProfessorSoFar);
+    //Don't invoke on the initial search page - search page has a dropdown, whereas results page doesnt
+    if (document.getElementsByTagName("select").length === 0) {
+      getNamesFromHub(processedProfessorSoFar);
+    }
   }
 };
 
