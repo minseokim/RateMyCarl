@@ -44,6 +44,7 @@ const processSecondRequest = (data, map, name) => {
     levelOfDifficulty : "N/A"
   }
 
+  //replace GET request 404 error messages from RateMyProfessors.com with empty string
   data = data.replace('/assets/chilis/warm-chili.png', '');
   data = data.replace('/assets/chilis/cold-chili.png', '');
   data = data.replace('/assets/chilis/new-hot-chili.png', '');
@@ -57,6 +58,7 @@ const processSecondRequest = (data, map, name) => {
   //May not exist yet(Reviews have not been added)
   //OR [0] : overall quality  [1] : would take again  [2] : level of difficulty
 
+  //Reviews exist, so remove newline and whitespace, populate gradeInfo object with information
   if (ratings.length >= 3) {
     gradeInfo.overallQuality = ratings[0].innerText.replace(/\n/g, "").trim();
     gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
@@ -89,7 +91,7 @@ const getNamesFromEnroll = (professorMap) => {
 
       if (professorMap.has(finalizedProfName)) {
 
-        addRatings(professorMap.get(finalizedProfName), facultyNode);
+        addRatings(professorMap.get(finalizedProfName), facultyNode, "enroll");
 
       } else {
 
@@ -97,7 +99,7 @@ const getNamesFromEnroll = (professorMap) => {
           .then((data) => { return processFirstRequest(data, finalizedProfName) })
             .then(fetchRatings)
               .then((data) => { return processSecondRequest(data, professorMap, finalizedProfName) })
-                .then((professorInfo) => { addRatings(professorInfo, facultyNode); })
+                .then((professorInfo) => { addRatings(professorInfo, facultyNode, "enroll"); })
                   .catch( (reason) => { console.error("ERROR : ", reason); });
 
       }
@@ -122,6 +124,25 @@ const getNamesFromHub = (professorMap) => {
   //Bou Nassif, Hicham
   //Keiser, Richard
 
+  //Add 'rating' header to The Hub Page Table
+  let rows = document.getElementsByTagName("tr");
+  let tableHeaders = rows[5];
+  let header = document.createElement("th");
+  header.innerText = 'Ratings';
+  header.className += "Grp_WSS_COURSE_SECTIONS right";
+  tableHeaders.append(header);
+
+  //Add column to each row
+  for (let i = 6; i < rows.length-1; i++) {
+    let column = document.createElement("td");
+      if (i % 2 === 0) {
+        column.className += "rateMyProfessor-ratings oddrow";
+      } else {
+        column.className += "rateMyProfessor-ratings evenrow";
+      }
+    rows[i].append(column);
+  }
+
   profNamesFromHub.forEach(function(facultyNode) {
 
     //remove all commas from names and split into array
@@ -137,10 +158,10 @@ const getNamesFromHub = (professorMap) => {
       } else {
 
         findProfessorPage(formattedProfName)
-          .then(processFirstRequest)
+          .then((data) => { return processFirstRequest(data, formattedProfName) })
             .then(fetchRatings)
-              .then((data) => { processSecondRequest(data, professorMap, formattedProfName); })
-                .then((data) => { addRatings(data, facultyNode); })
+              .then((data) => { return processSecondRequest(data, professorMap, formattedProfName); })
+                .then((data) => { addRatings(data, facultyNode, "hub"); })
                   .catch( (reason) => { console.error("Caught error for this :", reason); });
       }
 
@@ -154,7 +175,7 @@ const getNamesFromHub = (professorMap) => {
 */
 const findProfessorPage = (professorName) => {
 
-  //Our url for making initial request to find professor's profile page
+  //Our url for making initial request to find professor's profile page, change url with professor's name
   let url = "http://www.ratemyprofessors.com/search.jsp?queryBy=teacherName&schoolName=Carleton+College&queryoption=HEADER&query=PROFESSORNAME&facetSearch=true";
   url = url.replace("PROFESSORNAME", professorName);
 
@@ -179,8 +200,6 @@ const findProfessorPage = (professorName) => {
 
 
 const fetchRatings = (profilePageLink) => {
-  console.log(profilePageLink);
-
   return new Promise(function(resolve, reject) {
     //make second request
       chrome.runtime.sendMessage({
@@ -198,28 +217,40 @@ const fetchRatings = (profilePageLink) => {
 };
 
 
-const addRatings = (professorData, facultyNode) => {
+const addRatings = (professorData, facultyNode, whichPage) => {
 
-  console.log('facultyNode :', facultyNode);
-  console.log('profesorData : ' , professorData);
-
-  let heading = document.createElement("h4");
   let overallRating = document.createElement("p");
   let wouldTakeAgainPercentage = document.createElement("p");
   let difficultyRating = document.createElement("p");
 
-  overallRating.innerText = "Average Rating : " + professorData.overallQuality;
-  wouldTakeAgainPercentage.innerText = "Would Take Again : " + professorData.wouldTakeAgain;
-  difficultyRating.innerText = "Difficulty : " + professorData.levelOfDifficulty;
+  if (whichPage === "enroll") {
+    let heading = document.createElement("h4");
 
-  // console.log('overallRating :', overallRating);
-  // console.log('wouldTakeAgainPercentage :', wouldTakeAgainPercentage);
-  // console.log('difficultyRating :', difficultyRating);
-  //check if enroll or hub
-  //enroll
-  facultyNode.appendChild(overallRating);
-  facultyNode.appendChild(wouldTakeAgainPercentage);
-  facultyNode.appendChild(difficultyRating);
+    overallRating.innerText = "Average Rating : " + professorData.overallQuality;
+    wouldTakeAgainPercentage.innerText = "Would Take Again : " + professorData.wouldTakeAgain;
+    difficultyRating.innerText = "Difficulty : " + professorData.levelOfDifficulty;
+
+    // console.log('overallRating :', overallRating);
+    // console.log('wouldTakeAgainPercentage :', wouldTakeAgainPercentage);
+    // console.log('difficultyRating :', difficultyRating);
+    //check if enroll or hub
+    //enroll
+    facultyNode.appendChild(overallRating);
+    facultyNode.appendChild(wouldTakeAgainPercentage);
+    facultyNode.appendChild(difficultyRating);
+  } else if (whichPage === "hub") {
+
+    //from facultyNode, walk up to parent, then get lastChild to get current cell
+    let cell = facultyNode.parentNode.lastChild;
+    overallRating.innerText = "Avg: " + professorData.overallQuality;
+    wouldTakeAgainPercentage.innerText = "WTA: " + professorData.wouldTakeAgain;
+    difficultyRating.innerText = "Difficulty: " + professorData.levelOfDifficulty;
+
+    cell.appendChild(overallRating);
+    cell.appendChild(difficultyRating);
+    cell.appendChild(wouldTakeAgainPercentage);
+  }
+
 };
 
 
