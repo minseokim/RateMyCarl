@@ -48,6 +48,7 @@ const processSecondRequest = (info, map, name) => {
   let data = info.data;
   let profileLink = info.url;
 
+
   //replace GET request 404 error messages from RateMyProfessors.com with empty string
   data = data.replace('/assets/chilis/warm-chili.png', '');
   data = data.replace('/assets/chilis/cold-chili.png', '');
@@ -67,8 +68,11 @@ const processSecondRequest = (info, map, name) => {
     gradeInfo.overallQuality = ratings[0].innerText.replace(/\n/g, "").trim();
     gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
     gradeInfo.difficultyRating = ratings[2].innerText.replace(/\n/g, "").trim();
-    gradeInfo.profileLink = profileLink;
   }
+
+  //add url to gradeInfo whether there are reviews or not(Since profile page DOES exist)
+  gradeInfo.profileLink = profileLink;
+
   //map professor name with ratings
   map.set(name, gradeInfo);
 
