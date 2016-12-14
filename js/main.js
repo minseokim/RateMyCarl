@@ -278,7 +278,7 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     wouldTakeAgain : document.createElement("p"),
     difficultyRating : document.createElement("p"),
     firstReview : document.createElement("p"),
-    profileLink : document.createElement("a")
+    profileLink : document.createElement("a"),
   };
 
   for (key in elements) {
@@ -288,6 +288,9 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     }
       elements[key].className += "rateMyProfessor-rating";
   }
+
+  //add class to firstReview so we can adjust font Size
+  elements.firstReview.className += " firstReview";
 
   //add profile address to anchor tag, ensure it opens in new tab
   elements.profileLink.href = professorData.profileLink;

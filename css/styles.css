@@ -13,3 +13,7 @@
 .rateMyProfessor-rating > span {
   font-weight : normal !important;
 }
+
+.firstReview > span {
+  font-size : 14px;
+}
