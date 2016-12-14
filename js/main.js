@@ -13,7 +13,8 @@ let exceptions = {
   "Silvia López" : "Silvia+Lopez",
   "Palmar M Álvarez-Blanco" : "Palmar+Alvarez-Blanco",
   "José Cerna-Bazán" : "Jose+Cerna-Bazan",
-  "Beatriz Pariente-Beltrán" : "Beatriz+Pariente-Beltran"
+  "Beatriz Pariente-Beltrán" : "Beatriz+Pariente-Beltran",
+  "Éva S Pósfay": "Eva+Posfay",
 };
 
 
