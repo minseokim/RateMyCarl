@@ -1,0 +1,53 @@
+html, body {
+  height : 120px;
+  width : 250px;
+}
+
+body {
+  background-color : #A4B6C4;
+  font-family: "Avenir";
+}
+
+h1 {
+  text-align: center;
+  font-size: 18px;
+}
+
+img {
+  height : 14px;
+}
+
+.beer {
+  height : 20px;
+}
+
+.coffee, .carrot {
+  height : 35px;
+}
+
+p {
+  font-size: 13px;
+  line-height: 2px;
+}
+
+p:nth-child(2) {
+  padding-left : 20px;
+}
+
+p:last-child {
+  padding-bottom : 18px;
+  padding-left: 16px;
+}
+
+.strong {
+  font-weight: bold;
+}
+
+.header {
+  text-align: center;
+  padding-right : 20px;
+}
+
+a {
+  text-decoration: none;
+}
