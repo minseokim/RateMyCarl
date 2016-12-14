@@ -14,7 +14,7 @@ let exceptions = {
   "Palmar M Álvarez-Blanco" : "Palmar+Alvarez-Blanco",
   "José Cerna-Bazán" : "Jose+Cerna-Bazan",
   "Beatriz Pariente-Beltrán" : "Beatriz+Pariente-Beltran",
-  "Éva S Pósfay": "Eva+Posfay",
+  "Éva S Pósfay": "Eva+Posfay"
 };
 
 
@@ -59,6 +59,8 @@ const processSecondRequest = (info, map, name) => {
     wouldTakeAgain : "N/A",
     difficultyRating : "N/A",
     profileLink : "¯\\_(ツ)_/¯",
+    firstReview : "",
+    ratingsExist : false,
     reviewsExist : false
   }
 
@@ -75,16 +77,26 @@ const processSecondRequest = (info, map, name) => {
   let ratingResults = document.createElement("div");
   ratingResults.innerHTML = data;
 
+  //select div for professor ratings
   let ratings = ratingResults.getElementsByClassName("grade");
   //May not exist yet(Reviews have not been added)
   //OR [0] : overall quality  [1] : would take again  [2] : level of difficulty
+
+  //select div for most recent review
+  let mostRecentReview = ratingResults.getElementsByClassName("commentsParagraph");
+
+  //if there are reviews, remove newline and whitespace, populate gradeInfo with review
+  if (mostRecentReview.length >= 1) {
+    gradeInfo.firstReview = `"${mostRecentReview[0].innerText.trim()}"`;
+    gradeInfo.reviewsExist = true;
+  }
 
   //Reviews exist, so remove newline and whitespace, populate gradeInfo object with information
   if (ratings.length >= 3) {
     gradeInfo.overallQuality = ratings[0].innerText.replace(/\n/g, "").trim();
     gradeInfo.wouldTakeAgain = ratings[1].innerText.replace(/\n/g, "").trim();
     gradeInfo.difficultyRating = ratings[2].innerText.replace(/\n/g, "").trim();
-    gradeInfo.reviewsExist = true;
+    gradeInfo.ratingsExist = true;
   }
 
   //add url to gradeInfo whether there are reviews or not(Since profile page DOES exist)
@@ -221,8 +233,6 @@ const findProfessorPage = (professorName) => {
     url: url
   };
 
-
-
   return new Promise(function(resolve, reject) {
     chrome.runtime.sendMessage(requestInfo, function(data) {
       if (data) {
@@ -267,6 +277,7 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     overallQuality : document.createElement("p"),
     wouldTakeAgain : document.createElement("p"),
     difficultyRating : document.createElement("p"),
+    firstReview : document.createElement("p"),
     profileLink : document.createElement("a")
   };
 
@@ -282,21 +293,29 @@ const addRatings = (professorData, facultyNode, whichPage) => {
   elements.profileLink.href = professorData.profileLink;
   elements.profileLink.setAttribute("target", "_blank");
 
+
   if (whichPage === "enroll") {
 
     elements.overallQuality.prepend(document.createTextNode("Average Rating : "));
     elements.wouldTakeAgain.prepend(document.createTextNode("Would Take Again : "));
     elements.difficultyRating.prepend(document.createTextNode("Difficulty : "));
+    elements.firstReview.prepend(document.createTextNode("Most Recent Review : "));
     elements.profileLink.prepend(document.createTextNode("Read All Reviews"));
 
-    if (!professorData.reviewsExist) {
+    if (!professorData.ratingsExist) {
       elements.profileLink.innerText = "Add First Review";
     }
 
     facultyNode.appendChild(elements.overallQuality);
     facultyNode.appendChild(elements.difficultyRating);
     facultyNode.appendChild(elements.wouldTakeAgain);
+
+    //only append most recent review if it exists
+    if (professorData.ratingsExist) {
+      facultyNode.appendChild(elements.firstReview);
+    }
     facultyNode.appendChild(elements.profileLink);
+
   } else if (whichPage === "hub") {
 
     //from facultyNode, walk up to parent, then get lastChild to get current cell
@@ -306,7 +325,7 @@ const addRatings = (professorData, facultyNode, whichPage) => {
     elements.difficultyRating.prepend(document.createTextNode("Difficulty: "));
     elements.profileLink.prepend(document.createTextNode("Read Reviews"));
 
-    if (!professorData.reviewsExist) {
+    if (!professorData.ratingsExist) {
       elements.profileLink.innerText = "Write Review";
     }
 
