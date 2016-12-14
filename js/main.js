@@ -1,6 +1,7 @@
 /**
   RateMyCarl - Project by Alex Kim '17
   Made with <3 for Carleton Students
+  NOTE : Since RateMyProfessors.com doesn't have an official API, you have to make two requests - first searching with professor's name to get professor's profile link, then second using that profile link to actually get reviews
 **/
 
 
@@ -29,7 +30,9 @@ const formatProfNameWithSpace = (name) => {
   return formattedProfName;
 };
 
-
+/*
+  Gets each professor's profile link from first request and returns it
+*/
 const processFirstRequest = (data, map, name) => {
 
   let tempDiv = document.createElement('div');
@@ -51,7 +54,9 @@ const processFirstRequest = (data, map, name) => {
     }
 };
 
-
+/*
+  Gets ratings and reviews from second request and returns all populated info as an object
+*/
 const processSecondRequest = (info, map, name) => {
 
   let gradeInfo = {
@@ -110,7 +115,7 @@ const processSecondRequest = (info, map, name) => {
 
 
 /*
-  Fetches all professor names from enroll page and stores in a set
+  Fetches all professor names from enroll page and makes request
 */
 const getNamesFromEnroll = (professorMap) => {
 
@@ -153,7 +158,7 @@ const getNamesFromEnroll = (professorMap) => {
 
 
 /*
-  Fetches all professor names from The Hub and stores them in a set
+  Fetches all professor names from The Hub and makes request
 */
 const getNamesFromHub = (professorMap) => {
 
@@ -246,7 +251,9 @@ const findProfessorPage = (professorName) => {
 
 };
 
-
+/*
+  Returns promise that makes second request to get back specific professor's ratings and reviews
+*/
 const fetchRatings = (profilePageLink) => {
   return new Promise(function(resolve, reject) {
     //make second request
@@ -270,7 +277,9 @@ const fetchRatings = (profilePageLink) => {
   });
 };
 
-
+/*
+  Appends data received for each professor to each page(Hub & Enroll)
+*/
 const addRatings = (professorData, facultyNode, whichPage) => {
 
   let elements = {
@@ -340,7 +349,9 @@ const addRatings = (professorData, facultyNode, whichPage) => {
 
 };
 
-
+/*
+  Main function that gets invoked on init
+*/
 const main = () => {
 
   let processedProfessorSoFar = new Map();
